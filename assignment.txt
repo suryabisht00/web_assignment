@@ -1,0 +1,22 @@
+Assignment 1: Simple Navigation BarObjective: Create a responsive navigation bar using Flexbox.Requirements:
+The navigation bar should have the following links: Home, About, Services, Contact.
+Align the links horizontally and distribute them equally across the navbar.
+The navbar should be sticky at the top of the page.
+Change the background color of the links when hovered.
+
+
+Assignment 2: Centered ContentObjective: Use Flexbox to center content both horizontally and vertically.Requirements:
+Create a container with a fixed height and width of 500px.
+Add an image and a paragraph inside the container.
+Center the image and paragraph in the container both vertically and horizontally.
+Ensure that the paragraph wraps properly if it is long.
+ 
+
+Assignment 3: Footer with Flexible LayoutObjective: Create a footer with multiple sections using Flexbox.Requirements:
+The footer should contain three sections:
+Section 1: About Us
+Section 2: Quick Links (Home, Services, Contact)
+Section 3: Contact Info
+Arrange the sections horizontally on large screens.
+Stack the sections vertically on small screens.
+Ensure that each section occupies equal space horizontally on larger screens.
