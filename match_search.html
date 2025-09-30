@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Vector Core - Web Interface</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            background: white;
+            border-bottom: 3px solid #667eea;
+            color: #667eea;
+        }
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        label {
+            font-weight: 500;
+            color: #555;
+        }
+        input, button {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        input[type="file"] {
+            border: 2px dashed #667eea;
+            background: #f8f9fa;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+        }
+        .success { border-left-color: #28a745; }
+        .error { border-left-color: #dc3545; }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @media (max-width: 600px) {
+            .container { margin: 10px; }
+            .tabs { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('add')">Add Face</button>
+            <button class="tab-button" onclick="showTab('search')">Search Face</button>
+        </div>
+        
+        <div id="add-tab" class="tab-content active">
+            <h2>🤖 Add Face to Database</h2>
+            <form id="addForm">
+                <label for="addImage">Select Image:</label>
+                <input type="file" id="addImage" accept="image/*" required>
+                
+                <label for="name">Person Name:</label>
+                <input type="text" id="name" placeholder="Enter person's name" required>
+                
+                <label for="metadata">Metadata (optional):</label>
+                <input type="text" id="metadata" placeholder="Additional information">
+                
+                <button type="submit">Add Face</button>
+            </form>
+            <div id="addResult"></div>
+        </div>
+        
+        <div id="search-tab" class="tab-content">
+            <h2>🔍 Search Similar Faces</h2>
+            <form id="searchForm">
+                <label for="searchImage">Select Image:</label>
+                <input type="file" id="searchImage" accept="image/*" required>
+                
+                <label for="threshold">Similarity Threshold:</label>
+                <input type="number" id="threshold" min="0" max="1" step="0.1" value="0.6">
+                
+                <button type="submit">Search</button>
+            </form>
+            <div id="searchResult"></div>
+        </div>
+    </div>
+
+    <script>
+      const API_BASE_URL = "http://15.206.8.45";
+        const API_KEY = 'dz_live_2024_secure_api_key_xyz789';
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function showResult(elementId, message, isSuccess = true) {
+            const resultDiv = document.getElementById(elementId);
+            resultDiv.innerHTML = message;
+            resultDiv.className = isSuccess ? 'success' : 'error';
+        }
+
+        function showLoading(elementId) {
+            document.getElementById(elementId).innerHTML = '<div class="loading"></div> Loading...';
+        }
+
+        document.getElementById('addForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const imageFile = document.getElementById('addImage').files[0];
+            const name = document.getElementById('name').value.trim();
+            const metadata = document.getElementById('metadata').value.trim();
+            
+            if (!imageFile || !name) {
+                showResult('addResult', 'Please select an image and enter a name.', false);
+                return;
+            }
+            
+            showLoading('addResult');
+            
+            const formData = new FormData();
+            formData.append('action', 'add');
+            formData.append('image', imageFile);
+            formData.append('name', name);
+            formData.append('metadata', metadata);
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/faces`, {
+                    method: 'POST',
+                    headers: { 'X-API-Key': API_KEY },
+                    body: formData
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    showResult('addResult', `✅ Face added successfully! Person ID: ${data.data.person_id}`);
+                } else {
+                    showResult('addResult', `❌ Error: ${data.error || 'Failed to add face'}`, false);
+                }
+            } catch (error) {
+                showResult('addResult', `❌ Error: ${error.message}`, false);
+            }
+        });
+
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const imageFile = document.getElementById('searchImage').files[0];
+            const threshold = parseFloat(document.getElementById('threshold').value);
+            
+            if (!imageFile) {
+                showResult('searchResult', 'Please select an image.', false);
+                return;
+            }
+            
+            showLoading('searchResult');
+            
+            const formData = new FormData();
+            formData.append('action', 'search');
+            formData.append('image', imageFile);
+            formData.append('threshold', threshold);
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/faces`, {
+                    method: 'POST',
+                    headers: { 'X-API-Key': API_KEY },
+                    body: formData
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    const score = data.match_score ? `${(data.match_score * 100).toFixed(1)}%` : '0%';
+                    const userId = data.matched_user_id || 'None';
+                    showResult('searchResult', `Match Score: ${score}, Matched User ID: ${userId}`);
+                } else {
+                    showResult('searchResult', `❌ Error: ${data.error || 'Search failed'}`, false);
+                }
+            } catch (error) {
+                showResult('searchResult', `❌ Error: ${error.message}`, false);
+            }
+        });
+    </script>
+</body>
+</html>
